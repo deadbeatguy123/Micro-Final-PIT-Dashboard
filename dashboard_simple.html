@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ScholarTrack ESP-32 Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Newsreader:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <style>
+        /* Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+            color: #191c1d;
+            overflow: hidden;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        /* Layout */
+        .dashboard-container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 256px;
+            background-color: #f3f4f5;
+            border-right: 1px solid #c5c6cd;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-header {
+            padding: 24px;
+            border-bottom: 1px solid #e1e3e4;
+        }
+
+        .logo {
+            font-family: 'Newsreader', serif;
+            font-size: 32px;
+            font-weight: 600;
+            color: #051125;
+            margin-bottom: 16px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .user-details .user-name {
+            font-family: 'Newsreader', serif;
+            font-size: 20px;
+            font-weight: 500;
+            color: #051125;
+        }
+
+        .user-details .user-location {
+            font-size: 12px;
+            color: #45474d;
+        }
+
+        .nav-menu {
+            flex: 1;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            text-decoration: none;
+            color: #45474d;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .nav-item:hover {
+            background-color: #e7e8e9;
+        }
+
+        .nav-item.active {
+            background-color: #fdbd6f;
+            color: #83540c;
+        }
+
+        .sidebar-footer {
+            padding: 24px;
+            border-top: 1px solid #e1e3e4;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #c5c6cd;
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+        }
+
+        .header-title {
+            font-family: 'Newsreader', serif;
+            font-size: 24px;
+            font-weight: 500;
+            color: #051125;
+        }
+
+        .stats {
+            display: flex;
+            gap: 24px;
+            padding-left: 24px;
+            border-left: 1px solid #c5c6cd;
+        }
+
+        .stat {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            color: #45474d;
+        }
+
+        .stat-value {
+            font-family: 'Newsreader', serif;
+            font-size: 20px;
+            font-weight: 500;
+            color: #051125;
+        }
+
+        .stat-value.warning {
+            color: #ba1a1a;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .search-container {
+            position: relative;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #051125;
+        }
+
+        .search-input {
+            padding: 8px 16px 8px 40px;
+            background-color: #ffffff;
+            border: 1px solid #75777d;
+            border-radius: 8px;
+            font-size: 16px;
+            width: 256px;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #83540c;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 4px;
+        }
+
+        .icon-btn {
+            padding: 8px;
+            background: none;
+            border: none;
+            color: #45474d;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: color 0.2s ease;
+        }
+
+        .icon-btn:hover {
+            color: #83540c;
+        }
+
+        /* Content Area */
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 32px;
+        }
+
+        .page-header {
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .page-title {
+            font-family: 'Newsreader', serif;
+            font-size: 32px;
+            font-weight: 600;
+            color: #051125;
+        }
+
+        .page-subtitle {
+            font-size: 16px;
+            color: #45474d;
+            margin-top: 8px;
+        }
+
+        .status-legend {
+            display: flex;
+            gap: 12px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 12px;
+            background-color: #edeeef;
+            border: 1px solid #c5c6cd;
+            border-radius: 9999px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-dot.quiet {
+            background-color: #10b981;
+        }
+
+        .status-dot.moderate {
+            background-color: #f59e0b;
+        }
+
+        .status-dot.noisy {
+            background-color: #ba1a1a;
+        }
+
+        .status-label {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            color: #45474d;
+        }
+
+        /* Tables Grid */
+        .tables-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        .table-card {
+            background-color: #ffffff;
+            border: 1px solid #c5c6cd;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: box-shadow 0.2s ease;
+        }
+
+        .table-card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .table-card.available {
+            opacity: 0.8;
+            border-style: dashed;
+        }
+
+        .table-card.critical {
+            background-color: #ffdad6;
+            border: 2px solid #ba1a1a;
+        }
+
+        .table-header {
+            background-color: #edeeef;
+            padding: 8px 16px;
+            border-bottom: 1px solid #c5c6cd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-name {
+            font-family: 'Newsreader', serif;
+            font-size: 20px;
+            font-weight: 500;
+            color: #051125;
+        }
+
+        .table-status {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-indicator.quiet {
+            background-color: #10b981;
+        }
+
+        .status-indicator.moderate {
+            background-color: #f59e0b;
+        }
+
+        .status-indicator.noisy {
+            background-color: #ba1a1a;
+        }
+
+        .status-text {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+
+        .status-text.quiet {
+            color: #059669;
+        }
+
+        .status-text.moderate {
+            color: #d97706;
+        }
+
+        .status-text.noisy {
+            color: #ba1a1a;
+        }
+
+        .table-content {
+            padding: 16px;
+        }
+
+        .warnings-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .warnings-label {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            color: #45474d;
+            text-transform: uppercase;
+        }
+
+        .warnings-bar {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .warning-bar-segment {
+            width: 24px;
+            height: 6px;
+            border-radius: 3px;
+            background-color: #c5c6cd;
+        }
+
+        .warning-bar-segment.active {
+            background-color: #ba1a1a;
+        }
+
+        .warnings-count {
+            font-family: 'Inter', monospace;
+            font-size: 10px;
+            margin-left: 4px;
+        }
+
+        .students-section {
+            margin-top: 12px;
+        }
+
+        .students-label {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            color: #45474d;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .student-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0;
+        }
+
+        .student-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .student-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            color: #ffffff;
+        }
+
+        .student-details .student-name {
+            font-size: 16px;
+            font-weight: 500;
+            color: #051125;
+        }
+
+        .student-details .student-id {
+            font-size: 12px;
+            color: #45474d;
+        }
+
+        .student-actions {
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .student-item:hover .student-actions {
+            opacity: 1;
+        }
+
+        .available-content {
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 160px;
+        }
+
+        .available-icon {
+            color: #d9dadb;
+            font-size: 48px;
+            margin-bottom: 8px;
+        }
+
+        .available-text {
+            font-family: 'Newsreader', serif;
+            font-size: 20px;
+            font-weight: 500;
+            color: #d9dadb;
+            font-style: italic;
+        }
+
+        .critical-header {
+            background-color: #ba1a1a;
+            color: #ffffff;
+        }
+
+        .critical-content {
+            padding: 16px;
+        }
+
+        .critical-warnings-label {
+            color: #93000a;
+        }
+
+        .critical-student-name {
+            color: #93000a;
+            font-weight: 700;
+        }
+
+        .critical-student-id {
+            color: #93000a;
+            opacity: 0.8;
+        }
+
+        .intervention-btn {
+            width: 100%;
+            background-color: #ba1a1a;
+            color: #ffffff;
+            border: none;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            margin-top: 16px;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+        }
+
+        .btn-primary {
+            background-color: #83540c;
+            color: #ffffff;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        /* Avatar Colors */
+        .avatar-primary { background-color: #051125; }
+        .avatar-secondary { background-color: #83540c; }
+        .avatar-tertiary { background-color: #001224; }
+        .avatar-success { background-color: #10b981; }
+        .avatar-warning { background-color: #f59e0b; }
+        .avatar-error { background-color: #ba1a1a; }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                height: 100vh;
+                z-index: 999;
+                transform: translateX(-100%);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .mobile-menu-toggle {
+                display: block;
+                position: fixed;
+                top: 16px;
+                left: 16px;
+                z-index: 1000;
+                background: #f8f9fa;
+                border: 1px solid #c5c6cd;
+                border-radius: 8px;
+                padding: 8px;
+                cursor: pointer;
+            }
+
+            .header {
+                padding: 16px;
+            }
+
+            .header-left {
+                gap: 16px;
+            }
+
+            .stats {
+                display: none;
+            }
+
+            .search-container {
+                display: none;
+            }
+
+            .header-actions {
+                gap: 8px;
+            }
+
+            .content {
+                padding: 16px;
+                padding-bottom: 80px;
+            }
+
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+            }
+
+            .status-legend {
+                flex-wrap: wrap;
+            }
+
+            .tables-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .stats {
+                display: none;
+            }
+
+            .search-container {
+                display: none;
+            }
+        }
+
+        .mobile-menu-toggle {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-toggle {
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h1 class="logo">ScholarTrack</h1>
+                <div class="user-info">
+                    <img class="user-avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='40' r='20' fill='%234a5568'/%3E%3Cellipse cx='50' cy='80' rx='30' ry='20' fill='%234a5568'/%3E%3C/svg%3E" alt="Admin">
+                    <div class="user-details">
+                        <p class="user-name">Main Branch</p>
+                        <p class="user-location">Level 2 Archive</p>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="nav-menu">
+                <a class="nav-item active" onclick="showPage('overview')">
+                    <span class="material-symbols-outlined">grid_view</span>
+                    <span>Floor Overview</span>
+                </a>
+                <a class="nav-item" onclick="showPage('logs')">
+                    <span class="material-symbols-outlined">history</span>
+                    <span>Seating Logs</span>
+                </a>
+                <a class="nav-item" onclick="showPage('settings')">
+                    <span class="material-symbols-outlined">settings</span>
+                    <span>Settings</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <button class="btn btn-primary" onclick="generateReport()">Generate Report</button>
+            </div>
+        </aside>
+
+        <!-- Mobile Menu Toggle -->
+        <button class="mobile-menu-toggle" id="mobileMenuToggle" onclick="toggleMobileMenu()">
+            <span class="material-symbols-outlined">menu</span>
+        </button>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-left">
+                    <h2 class="header-title">ScholarTrack Library</h2>
+                    <div class="stats">
+                        <div class="stat">
+                            <span class="stat-label">Occupancy</span>
+                            <span class="stat-value" id="occupancy">142 / 200</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label">Warnings</span>
+                            <span class="stat-value warning" id="warnings">08 Active</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="header-right">
+                    <div class="search-container">
+                        <span class="material-symbols-outlined search-icon">search</span>
+                        <input type="text" class="search-input" placeholder="Search tables or students..." id="searchInput" oninput="handleSearch()">
+                    </div>
+                    <div class="header-actions">
+                        <button class="icon-btn" onclick="showNotifications()">
+                            <span class="material-symbols-outlined">notifications</span>
+                        </button>
+                        <button class="icon-btn" onclick="showAccount()">
+                            <span class="material-symbols-outlined">account_circle</span>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Content -->
+            <div class="content">
+                <!-- Overview Page -->
+                <div class="page" id="overviewPage">
+                    <div class="page-header">
+                        <div>
+                            <h3 class="page-title">Floor Overview</h3>
+                            <p class="page-subtitle">Real-time table monitoring for Level 2 Study Area.</p>
+                        </div>
+                        <div class="status-legend">
+                            <div class="status-item">
+                                <span class="status-dot quiet"></span>
+                                <span class="status-label">Quiet</span>
+                            </div>
+                            <div class="status-item">
+                                <span class="status-dot moderate"></span>
+                                <span class="status-label">Moderate</span>
+                            </div>
+                            <div class="status-item">
+                                <span class="status-dot noisy"></span>
+                                <span class="status-label">Noisy</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tables-grid" id="tablesGrid">
+                        <!-- Tables will be generated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Logs Page -->
+                <div class="page hidden" id="logsPage">
+                    <div class="page-header">
+                        <h3 class="page-title">Seating Logs</h3>
+                        <p class="page-subtitle">Historical seating data and analytics.</p>
+                    </div>
+                    <div class="logs-container">
+                        <div class="log-entry">
+                            <span class="log-time">14:32</span>
+                            <span class="log-action">James Dorsey seated at Table A1</span>
+                        </div>
+                        <div class="log-entry">
+                            <span class="log-time">14:28</span>
+                            <span class="log-action">Sarah Kim seated at Table A1</span>
+                        </div>
+                        <div class="log-entry">
+                            <span class="log-time">14:15</span>
+                            <span class="log-action">Warning issued for Table A4</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings Page -->
+                <div class="page hidden" id="settingsPage">
+                    <div class="page-header">
+                        <h3 class="page-title">Settings</h3>
+                        <p class="page-subtitle">Configure dashboard preferences.</p>
+                    </div>
+                    <div class="settings-container">
+                        <div class="setting-item">
+                            <label class="setting-label">Auto-refresh Interval</label>
+                            <select class="setting-input" id="refreshInterval" onchange="updateRefreshInterval()">
+                                <option value="5">5 seconds</option>
+                                <option value="10" selected>10 seconds</option>
+                                <option value="30">30 seconds</option>
+                                <option value="60">1 minute</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <label class="setting-label">Warning Threshold</label>
+                            <select class="setting-input" id="warningThreshold">
+                                <option value="2" selected>2 warnings</option>
+                                <option value="3">3 warnings</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <label class="setting-label">Sound Alerts</label>
+                            <input type="checkbox" class="setting-checkbox" id="soundAlerts">
+                        </div>
+                        <div class="setting-item">
+                            <label class="setting-label">ESP-32 Status</label>
+                            <div class="esp-status">
+                                <span id="connectionStatus">Connected (Demo Mode)</span>
+                                <span id="sensorData">Temp: 22.5°C | Humidity: 45.0% | Noise: 65dB</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Dashboard Data
+        let dashboardData = {
+            tables: [
+                { id: 'A1', status: 'noisy', warnings: 2, maxWarnings: 3, studentCount: 2 },
+                { id: 'A2', status: 'quiet', warnings: 0, maxWarnings: 3, studentCount: 0, available: true },
+                { id: 'A3', status: 'moderate', warnings: 0, maxWarnings: 3, studentCount: 1 },
+                { id: 'A4', status: 'critical', warnings: 3, maxWarnings: 3, studentCount: 1 },
+                { id: 'B1', status: 'quiet', warnings: 0, maxWarnings: 3, studentCount: 1 },
+                { id: 'B2', status: 'moderate', warnings: 1, maxWarnings: 3, studentCount: 1 },
+                { id: 'B3', status: 'quiet', warnings: 0, maxWarnings: 3, studentCount: 0, available: true },
+                { id: 'B4', status: 'quiet', warnings: 0, maxWarnings: 3, studentCount: 1 }
+            ],
+            occupancy: { current: 142, max: 200 },
+            warnings: 8,
+            sensors: { temperature: 22.5, humidity: 45.0, noiseLevel: 65 }
+        };
+
+        // Initialize Dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            renderTables();
+            updateStats();
+            startAutoRefresh();
+        });
+
+        function renderTables(searchTerm = '') {
+            const tablesGrid = document.getElementById('tablesGrid');
+            if (!tablesGrid) return;
+
+            const filteredTables = searchTerm 
+                ? dashboardData.tables.filter(table => 
+                    table.id.toLowerCase().includes(searchTerm.toLowerCase())
+                )
+                : dashboardData.tables;
+
+            tablesGrid.innerHTML = filteredTables.map(table => createTableCard(table)).join('');
+        }
+
+        function createTableCard(table) {
+            if (table.available) {
+                return `
+                    <div class="table-card available">
+                        <div class="table-header">
+                            <span class="table-name">Table ${table.id}</span>
+                            <div class="table-status">
+                                <span class="status-indicator quiet"></span>
+                                <span class="status-text quiet">Quiet</span>
+                            </div>
+                        </div>
+                        <div class="available-content">
+                            <span class="material-symbols-outlined available-icon">event_seat</span>
+                            <span class="available-text">Available</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            const isCritical = table.status === 'critical';
+            const statusClass = table.status === 'noisy' ? 'noisy' : table.status;
+            
+            return `
+                <div class="table-card ${isCritical ? 'critical' : ''}">
+                    <div class="table-header ${isCritical ? 'critical-header' : ''}">
+                        <span class="table-name">Table ${table.id}</span>
+                        <div class="table-status">
+                            <span class="status-indicator ${statusClass}"></span>
+                            <span class="status-text ${statusClass}">${isCritical ? 'Critical' : table.status.charAt(0).toUpperCase() + table.status.slice(1)}</span>
+                            ${isCritical ? '<span class="material-symbols-outlined" style="font-variation-settings: \'FILL\' 1; font-size: 16px;">warning</span>' : ''}
+                        </div>
+                    </div>
+                    <div class="${isCritical ? 'critical-content' : 'table-content'}">
+                        <div class="warnings-section">
+                            <span class="warnings-label ${isCritical ? 'critical-warnings-label' : ''}">Warnings</span>
+                            <div class="warnings-bar">
+                                ${generateWarningBars(table.warnings, table.maxWarnings)}
+                                <span class="warnings-count">${table.warnings}/${table.maxWarnings}</span>
+                            </div>
+                        </div>
+                        <div class="students-section">
+                            <span class="students-label">Seated Students</span>
+                            <div class="student-item">
+                                <div class="student-info">
+                                    <div class="student-avatar avatar-primary">${table.studentCount > 0 ? 'ST' : ''}</div>
+                                    <div class="student-details">
+                                        <p class="student-name ${isCritical ? 'critical-student-name' : ''}">${table.studentCount} student${table.studentCount !== 1 ? 's' : ''}</p>
+                                        <p class="student-id ${isCritical ? 'critical-student-id' : ''}">ID: #${Math.floor(Math.random() * 90000) + 10000}</p>
+                                    </div>
+                                </div>
+                                <div class="student-actions">
+                                    <span class="material-symbols-outlined">more_vert</span>
+                                </div>
+                            </div>
+                        </div>
+                        ${isCritical ? '<button class="intervention-btn" onclick="dispatchIntervention(\'' + table.id + '\')">Dispatch Intervention</button>' : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        function generateWarningBars(warnings, maxWarnings) {
+            let bars = '';
+            for (let i = 0; i < maxWarnings; i++) {
+                bars += `<div class="warning-bar-segment ${i < warnings ? 'active' : ''}"></div>`;
+            }
+            return bars;
+        }
+
+        function updateStats() {
+            const occupancyElement = document.getElementById('occupancy');
+            const warningsElement = document.getElementById('warnings');
+            
+            if (occupancyElement) {
+                occupancyElement.textContent = `${dashboardData.occupancy.current} / ${dashboardData.occupancy.max}`;
+            }
+            
+            if (warningsElement) {
+                warningsElement.textContent = `${String(dashboardData.warnings).padStart(2, '0')} Active`;
+            }
+        }
+
+        function handleSearch() {
+            const searchInput = document.getElementById('searchInput');
+            const searchTerm = searchInput.value;
+            renderTables(searchTerm);
+        }
+
+        function showPage(pageName) {
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.add('hidden');
+            });
+            
+            // Show selected page
+            const selectedPage = document.getElementById(pageName + 'Page');
+            if (selectedPage) {
+                selectedPage.classList.remove('hidden');
+            }
+
+            // Update navigation active states
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.closest('.nav-item').classList.add('active');
+        }
+
+        function toggleMobileMenu() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('open');
+        }
+
+        function generateReport() {
+            alert('Report generation feature - In ESP-32, this would collect sensor data and create a downloadable report file.');
+        }
+
+        function showNotifications() {
+            alert('Notifications panel - ESP-32 system alerts and warnings would appear here.');
+        }
+
+        function showAccount() {
+            alert('Account settings - ESP-32 device configuration would appear here.');
+        }
+
+        function dispatchIntervention(tableId) {
+            if (confirm(`Dispatch intervention for Table ${tableId}? This would notify library staff and activate ESP-32 hardware alerts.`)) {
+                alert(`Intervention dispatched for Table ${tableId}. In ESP-32, this would trigger the buzzer and send notifications.`);
+                
+                // Reset table warnings locally
+                const table = dashboardData.tables.find(t => t.id === tableId);
+                if (table) {
+                    table.warnings = 0;
+                    table.status = 'moderate';
+                    renderTables();
+                    updateStats();
+                }
+            }
+        }
+
+        function updateRefreshInterval() {
+            const refreshIntervalSelect = document.getElementById('refreshInterval');
+            const interval = parseInt(refreshIntervalSelect.value) * 1000;
+            console.log('Auto-refresh interval set to:', interval);
+            // In a real implementation, this would update the refresh timer
+        }
+
+        function startAutoRefresh() {
+            // Simulate data updates every 10 seconds
+            setInterval(() => {
+                // Randomly update some data
+                const randomTable = dashboardData.tables[Math.floor(Math.random() * 8)];
+                if (Math.random() > 0.7 && randomTable.warnings < randomTable.maxWarnings) {
+                    randomTable.warnings++;
+                    if (randomTable.warnings >= 3) {
+                        randomTable.status = 'critical';
+                    } else if (randomTable.warnings >= 2) {
+                        randomTable.status = 'noisy';
+                    }
+                    renderTables();
+                    updateStats();
+                }
+            }, 10000);
+        }
+    </script>
+</body>
+</html>
